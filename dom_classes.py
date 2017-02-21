@@ -1,10 +1,13 @@
 """ This defines the classes used in games of Dominion"""
 
 # What to do next:  Write the Action and Buy Phases, How to Play a Card? Also write Initialize Function. How to populate Field with Supply Piles?
+# Start the main function. In it, we can initialize the game object as a global object. That way, any function can access it
+# Create an iterator for Deck,DiscardPile,Trash,and Hand?
+
 import random
 # import baseset
 class Card():
-	def __init__(self,Cost, Action=0,Treasure=0,Victory=0,Curse=0):
+	def __init__(self,Name,Cost, Action=0,Treasure=0,Victory=0,Curse=0):
 		""" Action, Treasure, and Victory are booleans that indicate the type of a card. Some cards can be multiple types, which is why they aren't exclusive.
 		Cost is an non-negative integer indicating the cost of the card."""
 		self.Action= Action
@@ -12,71 +15,122 @@ class Card():
 		self.Victory=Victory
 		self.Curse=Curse
 		self.Cost=Cost 
+		self.name = Name
+	def __repr__(self):
+		return self.name
+	# def __cmp__(self,other):
+	# 	return cmp(self.name, other.name)
 
 	def playCard(self):
 		# Removes Card from Hand such that its effect takes place
 		pass
 
 
+class Kingdom():
+	# A Kingdom card is initialized to have the same methods as a Card(), but will have the additional methods associated with playing Action Cards
+	def __init__(self,Cost, Action=0,Treasure=0,Victory=0,Curse=0):
+		self.card=Card(self.Cost, self.Action,self.Treasure,self.Victory,self.Curse)
+		self.effectdict = {"Actions":0,"Buys":0,"Money":0} # This will be altered by a specific card's effect
+
+	def modActions(dictionary, numActions):
+		# This function will simply return the integer passed to it in a dictionary. This represents a modification on the number of Actions in a Player's turn
+		dictionary["Actions"]+=numActions
+		return dictionary
+
+	def modDraw(numDraws,deck):
+		# This function will allow the user to draw an integer numDraws number of cards from the Deck
+		cardsdrawn= draw(numDraws,deck)
+		return cardsdrawn # We can then append this to the hand
+
+	def modBuys(dictionary, numBuys):
+		dictionary["Buys"]+=numBuys
+		return dictionary
+
+	def modMoney(dictionary, numMoneys):
+		dictionary["Money"]+=numMoneys
+		return dictionary
+
+	def modTrash(num,options="True"):
+		# Places cards in the Trash. Sometimes this allows us to trash multiple cards. Sometimes we have the option to choose which card(s) to trash. 
+		pass
+
+	def GainfromSupply():
+		# Take Cards from the Supply Pile, send it to Discard Pile 
+		pass
+
+	def modDiscard():
+		pass
+
+	def Reveal():
+		pass	
+
+	def SetAside():
+		pass
+
+	def PlayAnother():
+		pass
 
 # This cards appear in every set, Copper, Silver, Gold; Estate, Duchy, Province; Curse
 class Copper():
 	def __init__(self):
-		self.card=Card(Treasure=1,Cost=0)
+		self.card=Card(Name = "Copper",Treasure=1,Cost=0)
 		self.Value = 1
-
 	def __repr__(self):
-		return("Copper")
+		return str(self.card)
 
 class Silver():
 	def __init__(self):
-		self.card=Card(Treasure=1,Cost=3)
+		self.card=Card(Name = "Silver",Treasure=1,Cost=3)
 		self.Value = 2	
-
 	def __repr__(self):
-		return("Silver")
+		return str(self.card)
+
 
 class Gold():
 	def __init__(self):
-		self.card=Card(Treasure=1,Cost=6)
+		self.card=Card(Name = "Gold",Treasure=1,Cost=6)
 		self.Value = 3	
-
 	def __repr__(self):
-		return("Gold")
+		return str(self.card)
+
+
 
 
 class Estate():
 	def __init__(self):
-		self.card=Card(Victory=1,Cost=2)
+		self.card=Card(Name = "Estate",Victory=1,Cost=2)
 		self.Points = 1
-
 	def __repr__(self):
-		return("Estate")
+		return str(self.card)
+
+
 
 class Duchy():
 	def __init__(self):
-		self.card=Card(Victory=1,Cost=5)
+		self.card=Card(Name = "Duchy",Victory=1,Cost=5)
 		self.Points = 3
-
 	def __repr__(self):
-		return("Duchy")
+		return str(self.card)
+
+
 
 class Province():
 	def __init__(self):
-		self.card=Card(Victory=1,Cost=8)
+		self.card=Card(Name = "Province",Victory=1,Cost=8)
 		self.Points = 6
-
 	def __repr__(self):
-		return("Province")
+		return str(self.card)
+
+
 
 
 class Curse():
 	def __init__(self):
-		self.card=Card(Curse=1,Cost=0)
+		self.card=Card(Name = "Curse",Curse=1,Cost=0)
 		self.Points = -1
-
 	def __repr__(self):
-		return("Curse")
+		return str(self.card)
+
 
 # Now I need a Deck, and in that, methods to draw cards, check the amount of cards left
 class Deck():
@@ -91,6 +145,9 @@ class Deck():
 		shuffled = self.ActualCards[:]
 		random.shuffle(shuffled)
 		return str(shuffled[:])
+
+	def __iter__(self):
+		return iter(self.ActualCards)
 
 	def drawNewHand(self):
 		# Take an amount of cards from the deck, and put it in the player's hand
@@ -110,6 +167,8 @@ class Hand():
 	def __str__(self):
 		# This will return the name of the cards in one's hand
 		return str(self.HandCards)
+	def __iter__(self):
+		return iter(self.HandCards)
 
 
 class Player():
@@ -176,6 +235,28 @@ def ActionPhase():
 	# This needs a way to play cards that the player chooses, and a way to implement their effects. The played cards also need to 
 	# be placed in a location where they can be moved to the discard pile at the end of the turn. 
 	# While CurrentPlayerActions, allow Actions to be played 
+
+	while CurrentPlayerActions:
+		cont =input("Would you like to play an Action? y/n")
+		#if cont, execute loop, else break. 
+
+		cardtoplay = input("What action will you play?")
+
+		# Check if input card exists in hand
+		if any(x.card.name.lower() == cardtoplay.lower() for x in game1.Players[currentPlayer].hand1.HandCards):
+			print("Card not in hand")
+			continue
+		else:	
+			# Really stupid way to find the relevant index in the players hand		
+			for x in range(0,len(game1.Players[currentPlayer].hand1.HandCards)):
+				if game1.Players[currentPlayer].hand1.HandCards[x].card.name.lower() == cardtoplay.lower():
+					cardindex = x
+					break
+			# Activate the effect of the card in question
+			game1.Players[currentPlayer].hand1.HandCards[cardindex].effect()
+			# Take into account the effects (using a dictionary to alter Action, Buy, and Money counters)
+			
+
 	pass
 def BuyPhase():
 	# While CurrentPlayerBuys, allow Buys to be made
@@ -210,9 +291,17 @@ def EndofGame():
 
 # Debugging
 if __name__ == '__main__':
-	deck1 = Deck()
-	print(deck1)
+	global game1, currentPlayer
 	game1 = Game(2)
-	print('Cards in Player%s\'s Deck: %s' %(game1.Players[0].PlayerID+1, game1.Players[0].Deck.ActualCards)) # Incongruity in printing the deck
+
+
+	# Tests
+	# print('Cards in Player%s\'s Deck: %s' %(game1.Players[0].PlayerID+1, game1.Players[0].Deck.ActualCards)) # Incongruity in printing the deck
 	game1.Players[0].hand1= game1.Players[0].Deck.drawNewHand()
-	print('Cards in Player%s\'s hand: %s' %(game1.Players[0].PlayerID,game1.Players[0].hand1))
+	cardtoplay = "Copper"
+	print(game1.Players[0].hand1.HandCards)
+	# a = game1.Players[0].hand1.index(Estate)
+	for x in range(0,len(game1.Players[0].hand1.HandCards)):
+		if game1.Players[0].hand1.HandCards[x].card.name.lower() == cardtoplay.lower():
+			print(x)
+			break
