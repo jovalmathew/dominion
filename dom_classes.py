@@ -1,10 +1,14 @@
+#!/usr/bin/env python3
+
 """ This defines the classes used in games of Dominion"""
 
 # What to do next:  Write the Action and Buy Phases, How to Play a Card? Also write Initialize Function. How to populate Field with Supply Piles?
 # Start the main function. In it, we can initialize the game object as a global object. That way, any function can access it
 # Create an iterator for Deck,DiscardPile,Trash,and Hand?
+# implement a time limit
 
 import random
+from collections import Counter # This is a dictionary that can be added with other dictionaries
 # import baseset
 class Card():
 	def __init__(self,Name,Cost, Action=0,Treasure=0,Victory=0,Curse=0):
@@ -30,7 +34,7 @@ class Kingdom():
 	# A Kingdom card is initialized to have the same methods as a Card(), but will have the additional methods associated with playing Action Cards
 	def __init__(self,Cost, Action=0,Treasure=0,Victory=0,Curse=0):
 		self.card=Card(self.Cost, self.Action,self.Treasure,self.Victory,self.Curse)
-		self.effectdict = {"Actions":0,"Buys":0,"Money":0} # This will be altered by a specific card's effect
+		self.effectdict = Counter({"Actions":0,"Buys":0,"Money":0}) # This will be altered by a specific card's effect
 
 	def modActions(dictionary, numActions):
 		# This function will simply return the integer passed to it in a dictionary. This represents a modification on the number of Actions in a Player's turn
@@ -195,11 +199,12 @@ class Game():
 		# We can also come up with the randomized list of Actions used this game
 
 class Field():
-	# The field consists of everything common to both players, the 10 Action Cards, the Trash, Treasures and Victory Cards
+	# The field consists of everything common to both players, the 10 Kingdom Cards, the Trash, Treasures and Victory Cards
+
 	def __init__():
 		# Initializing the field will create an empty trash, 10 Supply Piles, Victory Cards and Treasures
 		self.Trash=[] 
-
+		Supply = {}
 
 
 # General Functions for use by Deck, Hand, Trash, or any pile
@@ -230,50 +235,78 @@ def howmanybuys():
 
 # Here, define the functions that will actually run the game
 def ActionPhase():
-	# Check a CurrentPlayerActions counter to see how many Actions can be played, decrement this counter if an Action is played, 
+	# Check a action_count counter to see how many Actions can be played, decrement this counter if an Action is played, 
 	# increment it if the card increases the amount of actions the player has.
 	# This needs a way to play cards that the player chooses, and a way to implement their effects. The played cards also need to 
 	# be placed in a location where they can be moved to the discard pile at the end of the turn. 
-	# While CurrentPlayerActions, allow Actions to be played 
-
-	while CurrentPlayerActions:
+	# While action_count, allow Actions to be played 
+	action_count = 1
+	effect = Counter({'Actions':1, 'Buys':1, 'Money':0})
+	while action_count:
 		cont =input("Would you like to play an Action? y/n")
 		#if cont, execute loop, else break. 
+		if cont == 'n': 
+			effect['Actions'] = 0
+			return effect
 
 		cardtoplay = input("What action will you play?")
 
 		# Check if input card exists in hand
-		if any(x.card.name.lower() == cardtoplay.lower() for x in game1.Players[currentPlayer].hand1.HandCards):
-			print("Card not in hand")
-			continue
-		else:	
+		if any(x.card.name.lower() == cardtoplay.lower() for x in game1.Players[currentPlayer].hand.HandCards):
+
 			# Really stupid way to find the relevant index in the players hand		
-			for x in range(0,len(game1.Players[currentPlayer].hand1.HandCards)):
-				if game1.Players[currentPlayer].hand1.HandCards[x].card.name.lower() == cardtoplay.lower():
+			for x in range(0,len(game1.Players[currentPlayer].hand.HandCards)):
+				if game1.Players[currentPlayer].hand.HandCards[x].card.name.lower() == cardtoplay.lower():
 					cardindex = x
 					break
-			# Activate the effect of the card in question
-			game1.Players[currentPlayer].hand1.HandCards[cardindex].effect()
-			# Take into account the effects (using a dictionary to alter Action, Buy, and Money counters)
-			
-
-	pass
-def BuyPhase():
+			# Check if the card is an action card
+			if game1.Players[currentPlayer].hand.HandCards[cardindex].card.Action:
+				# Activate the effect of the card in question
+				effect = effect + game1.Players[currentPlayer].hand.HandCards[cardindex].effect()
+				# Take into account the effects (using a dictionary to alter Action, Buy, and Money counters)
+				action_count = action_count + effect.get('Actions',0) - 1
+				return effect
+			else:
+				print("This card is not an Action card")
+		else:	
+			print("Card not in hand")
+			continue
+	return effect
+def BuyPhase(effects_dictionary):
 	# While CurrentPlayerBuys, allow Buys to be made
+	buy_count = effects_dictionary.get("Buys", 1)
+	print(effects_dictionary)
 	pass
 def ResidualEffects():
 	# This function will execute events that take place at the start of a players turn
 	pass
 
 
-def InitializeGame():
+def InitializeGame(numplayers):
 	# This function will instantiate a Game() object, and Set up the basics of the game. When finished, it will
 	# call CurrentplayerTurn
+	global game1, currentPlayer, totalplayers
+	totalplayers=numplayers
+	game1 = Game(totalplayers)
+	currentPlayer = 0
+	#Create Supply Piles
+	# Here, we have a list possible_cards, which consists of all sets in this game. From this list, we choose 10 cards. 
+	# new_list = random.sample(possible_cards, 10)
+	# {el:0 for el in new_list}
+
+	for i in range(0,totalplayers):
+		game1.Players[i].hand= game1.Players[i].Deck.drawNewHand()
+
+	CurrentplayerTurn(currentPlayer)
 	pass
 
-def CurrentplayerTurn():
+def CurrentplayerTurn(currentPlayer):
 	# This will check the global variable for the current player, and go through the phases of the turn
 	# any initial draws, then Action Phase, then Buy phase. After all of this, we can call EndofTurn(), 
+
+	effect = ActionPhase()
+	BuyPhase(effect)
+	EndofTurn()
 	pass
 
 def EndofTurn():
@@ -281,6 +314,13 @@ def EndofTurn():
 	# change currentPlayer variable to the next player in the list (change a global variable?)
 	# Check to see if end of game conditions are met. If so, call EndofGame, else call CurrentplayerTurn
 
+	if True:
+		EndofGame()
+	else: 
+
+		# Move everything to discard pile, draw new hand 
+		currentPlayer = (currentPlayer+1)%totalplayers
+		CurrentplayerTurn(currentPlayer)
 	pass
 
 def EndofGame():
@@ -291,17 +331,11 @@ def EndofGame():
 
 # Debugging
 if __name__ == '__main__':
-	global game1, currentPlayer
-	game1 = Game(2)
-
 
 	# Tests
 	# print('Cards in Player%s\'s Deck: %s' %(game1.Players[0].PlayerID+1, game1.Players[0].Deck.ActualCards)) # Incongruity in printing the deck
-	game1.Players[0].hand1= game1.Players[0].Deck.drawNewHand()
-	cardtoplay = "Copper"
-	print(game1.Players[0].hand1.HandCards)
+	# game1.Players[0].hand1= game1.Players[0].Deck.drawNewHand()
+	# cardtoplay = "Copper"
+	# print(game1.Players[0].hand1.HandCards)
 	# a = game1.Players[0].hand1.index(Estate)
-	for x in range(0,len(game1.Players[0].hand1.HandCards)):
-		if game1.Players[0].hand1.HandCards[x].card.name.lower() == cardtoplay.lower():
-			print(x)
-			break
+	InitializeGame(2)
