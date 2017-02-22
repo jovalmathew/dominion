@@ -155,7 +155,7 @@ class Deck():
 
 	def drawNewHand(self):
 		# Take an amount of cards from the deck, and put it in the player's hand
-		newHand = draw(5,self.ActualCards)
+		newHand = move_cards(5,self.ActualCards)
 		hand = Hand(newHand) # Could this cause errors with naming?
 		return hand
 
@@ -213,7 +213,7 @@ def checkSize(listOfcards):
 	# Check the amount of Cards in any collection of Cards (Deck,Pile, Hand, etc)
 	return len(listOfcards)
 
-def draw(amount,source):
+def move_cards(amount,source):
 	# Takes an amount of cards from the source, and moves it to the destination. This method is further extended in other classes
 	cardsdrawn = []
 	for i in range(amount):
@@ -264,7 +264,7 @@ def ActionPhase():
 				# Activate the effect of the card in question
 				effect = effect + game1.Players[currentPlayer].hand.HandCards[cardindex].effect()
 				# Take into account the effects (using a dictionary to alter Action, Buy, and Money counters)
-				action_count = action_count + effect.get('Actions',0) - 1
+				action_count += effect.get('Actions',0) - 1
 				return effect
 			else:
 				print("This card is not an Action card")
@@ -276,6 +276,14 @@ def BuyPhase(effects_dictionary):
 	# While CurrentPlayerBuys, allow Buys to be made
 	buy_count = effects_dictionary.get("Buys", 1)
 	print(effects_dictionary)
+	# Count the number of treasure in our hand. Add that up with the money from the dictionary. Allow gaining a card from the supply piles, 
+	# subtract that cost from the available money. 
+	while buy_count:
+		cont =input("Would you like to buy something? y/n")
+		if cont == 'n': 
+			effect['Buys'] = 0
+			return
+		break
 	pass
 def ResidualEffects():
 	# This function will execute events that take place at the start of a players turn
